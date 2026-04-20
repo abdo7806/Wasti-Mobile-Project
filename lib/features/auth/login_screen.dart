@@ -18,6 +18,20 @@ class _LoginScreenState extends State<LoginScreen> {
   bool isLoading = false;
   bool _obscurePassword = true;
 
+  // دالة لاستخراج الـ Role من التوكن (مثل extractRoleFromPayload في الويب)
+  String extractRoleFromToken(Map<String, dynamic> decodedToken) {
+    return decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ?? 
+           decodedToken['role'] ?? 
+           '';
+  }
+
+  // دالة لاستخراج الـ Email من التوكن
+  String extractEmailFromToken(Map<String, dynamic> decodedToken) {
+    return decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/email'] ?? 
+           decodedToken['email'] ?? 
+           '';
+  }
+
   Future<void> login() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
@@ -48,18 +62,24 @@ class _LoginScreenState extends State<LoginScreen> {
       final token = data['token'];
       final decodedToken = JwtDecoder.decode(token);
 
-      if (decodedToken['role'] != 'Patient') {
+      // استخراج الدور باستخدام الدالة المساعدة (نفس طريقة الويب)
+      final userRole = extractRoleFromToken(decodedToken);
+      
+      if (userRole != 'Patient') {
         setState(() => errorMessage = 'هذه الواجهة مخصصة للمرضى فقط');
         return;
       }
 
-      // حفظ التوكن والبيانات في localStorage
+      // استخراج البريد باستخدام الدالة المساعدة (نفس طريقة الويب)
+      final userEmail = extractEmailFromToken(decodedToken);
+
+      // حفظ التوكن والبيانات في localStorage (نفس الطريقة القديمة)
       html.window.localStorage['token'] = token;
       html.window.localStorage['userData'] = jsonEncode({
         'fullName': data['user']['fullName'],
         'userId': data['user']['id'],
-        'email': decodedToken['email'],
-        'role': decodedToken['role'],
+        'email': userEmail,
+        'role': userRole,
       });
 
       // توجيه المريض
@@ -90,7 +110,6 @@ class _LoginScreenState extends State<LoginScreen> {
               ],
             ),
           ),
-         
           child: Center(
             child: Container(
               width: size.width > 500 ? 500 : size.width * 0.9,
@@ -107,26 +126,23 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ],
               ),
-             
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // شعار التطبيق
                   const Icon(
-  Icons.medical_services,  // أيقونة طبية
-  size: 100,
-  color: Colors.blue,
-),
-           Text(
-  'تسجيل الدخول',
-  style: theme.textTheme.titleLarge?.copyWith(
-    fontWeight: FontWeight.bold,
-    color: theme.primaryColor,
-  ),
-),
+                    Icons.medical_services,
+                    size: 100,
+                    color: Colors.blue,
+                  ),
+                  Text(
+                    'تسجيل الدخول',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.primaryColor,
+                    ),
+                  ),
                   const SizedBox(height: 24),
 
-                  // رسالة الخطأ
                   if (errorMessage.isNotEmpty)
                     Container(
                       padding: const EdgeInsets.all(12),
@@ -150,7 +166,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
 
-                  // حقل البريد الإلكتروني
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -164,7 +179,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // حقل كلمة المرور
                   TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
@@ -188,13 +202,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
-
-              
-             
                   const SizedBox(height: 24),
 
-                  // زر تسجيل الدخول
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -215,7 +224,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // رابط التسجيل
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
