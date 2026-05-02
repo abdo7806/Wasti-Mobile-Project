@@ -66,7 +66,9 @@ class _PrescriptionsScreenState extends State<PrescriptionsScreen> {
       }
 
       final patientId = patientData['id'];
-      final url = Uri.parse('https://localhost:7219/api/Prescription/GetByPatientId/$patientId');
+      // final url = Uri.parse('https://localhost:7219/api/Prescription/GetByPatientId/$patientId');
+      final url = Uri.parse('https://localhost:7219/api/Prescription/MyPrescriptions');
+
       final token = html.window.localStorage['token'];
 
       if (token == null || token.isEmpty) {
